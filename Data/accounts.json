@@ -1,0 +1,52 @@
+{
+    "admins": {
+        "shayan_bajelan": {
+            "id": 0,
+            "sex": "male",
+            "name": "Shayan",
+            "lastName": "bajelan",
+            "address": "Tehran, Janat Abad",
+            "phoneNumber": "09105371477",
+            "password": "123456"
+        },
+        "wave": {
+            "id": 4,
+            "sex": "male",
+            "name": "Wave",
+            "lastName": "FC",
+            "address": "Football",
+            "phoneNumber": "09377780569",
+            "password": "123456"
+        }
+    },
+    "users": {
+        "erfan01": {
+            "id": 1,
+            "sex": "male",
+            "name": "erfan",
+            "lastName": "bajelan",
+            "address": "Tehran, Janat Abad",
+            "phoneNumber": "09035376777",
+            "password": "123456"
+        },
+        "ali02": {
+            "id": 2,
+            "sex": "male",
+            "name": "ali",
+            "lastName": "bajelan",
+            "address": "Tehran, Janat Abad",
+            "phoneNumber": "555656567",
+            "password": "123456"
+        },
+        "parsa03": {
+            "id": 3,
+            "sex": "male",
+            "name": "Parsa",
+            "lastName": "moradi",
+            "address": "Turkey",
+            "phoneNumber": "0912845054",
+            "password": "123456"
+        }
+    },
+    "lastId": 5
+}
