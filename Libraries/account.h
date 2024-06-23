@@ -1,5 +1,5 @@
 #include "utilities.h"
 
-User *getAllUsers();
-User *getAllAdmins();
+int getAllUsers(User *users);
+int getAllAdmins(Admin *admins);
 User signIn(char *username, char *password);
