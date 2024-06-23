@@ -1,4 +1,4 @@
-#include "utilities.h"
+#include <stdlib.h>
 
 #define GLUE_HELPER(x, y) x##y
 #define GLUE(x, y) GLUE_HELPER(x, y)
@@ -17,13 +17,16 @@
 #define RA(type, ptr, size) \
     (type *) realloc(ptr, size * sizeof(type))
 
+#define foreach_node(type, head) \
+    for(type current = head; current != NULL; current = current->next)
+
 #define DLinkedList(typeName, type) typedef struct GLUE(Node_, typeName) { type value; struct GLUE(Node_, typeName) *next; } GLUE(Node_, typeName); typedef struct GLUE(Linked_List_, typeName) { int length; GLUE(Node_, typeName) *items; } GLUE(Linked_List_, typeName);
 #define NewNode(newItem, type) \
-({\
-    type* newNode = CA(type);\
-    newNode->value = newItem;\
-    newNode->next = NULL;\
-    newNode;\
+({                             \
+    type* newNode = CA(type);  \
+    newNode->value = newItem;  \
+    newNode->next = NULL;      \
+    newNode;                   \
 })
 #define LList(typeName, name) GLUE(Linked_List_, typeName) *name = MA(GLUE(Linked_List_, typeName)); name->length = 0; name->items = CA(GLUE(Node_, typeName));
 #define Append(newItem, lls)                                                  \
@@ -62,19 +65,21 @@
     answer;                           \
 })
 
-#define Search(value, lls, keyFunc)                                     \
+#define Search(searchValue, lls, keyFunc)                               \
 ({                                                                      \
-    T(lls->items) head = lls->items;                                    \
-    T(lls->items) answer = NewNode("Not found!", T(*(lls->items)));     \
-    while (head != NULL) {                                              \
-        if (keyFunc(value, head)) {                                     \
-            answer = head;                                              \
-            break;                                                      \
+    T(lls->items) answer = NULL;                                        \
+    if (lls->length != 0) {                                             \
+        T(lls->items) head = lls->items;                                \
+        while (head != NULL) {                                          \
+            if (keyFunc(searchValue, head)) {                           \
+                answer = head;                                          \
+                break;                                                  \
+            }                                                           \
+            head = head->next;                                          \
         }                                                               \
-        head = head->next;                                              \
     }                                                                   \
     answer;                                                             \
-})                                                                      \
+})                                                                      
 
 #define DList(typeName, type) typedef struct GLUE(List_, typeName) { int length; type *items; } GLUE(List_, typeName);
 #define List(typeName, name) GLUE(List_, typeName) *name = MA(GLUE(List_, typeName)); name->length = 0; name->items = CA(T(*(name->items)));

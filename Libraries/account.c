@@ -1,14 +1,11 @@
 #include "account.h"
+#include <string.h>
 
-int getAllUsers(User *users) {
+void getAllUsers(Linked_List_User *users) {
     struct json_object *usersObject;
     struct json_object *json = JSON("../Data/accounts.json");
-
     json_object_object_get_ex(json, "users", &usersObject);
-    users = (User *) realloc(users, json_object_object_length(usersObject) * sizeof(User));
 
-    // uses linked lists
-    int i = 0;
     json_object_object_foreach(usersObject, key, val) {
         User newUser;
         
@@ -37,24 +34,17 @@ int getAllUsers(User *users) {
         newUser.lastname = (char *) json_object_get_string(lastname);
         newUser.phoneNumber = (char *) json_object_get_string(phoneNumber);
 
-        *(users + i) = newUser;
-        i += 1;
+        Append(newUser, users);
     }
 
-
     free(json);
-    return i;
 }
 
-int getAllAdmins(Admin *admins) {
+void getAllAdmins(Linked_List_Admin *admins) {
     struct json_object *adminsObject;
     struct json_object *json = JSON("../Data/accounts.json");
-
     json_object_object_get_ex(json, "admins", &adminsObject);
-    admins = (Admin *) realloc(admins, json_object_object_length(adminsObject) * sizeof(Admin));
 
-    // uses linked lists
-    int i = 0;
     json_object_object_foreach(adminsObject, key, val) {
         Admin newAdmin;
         
@@ -83,26 +73,49 @@ int getAllAdmins(Admin *admins) {
         newAdmin.lastname = (char *) json_object_get_string(lastname);
         newAdmin.phoneNumber = (char *) json_object_get_string(phoneNumber);
 
-        *(admins + i) = newAdmin;
-        i += 1;
+        Append(newAdmin, admins);
     }
 
-
     free(json);
-    return i;
+}
+
+typedef struct credentials {
+    char *username;
+    char *password;
+} credentials;
+
+bool searchUser(struct credentials value, Node_User* head) {
+    if (
+        strcmp(value.username, head->value.username) == 0 &&
+        strcmp(value.password, head->value.password) == 0
+    ) return true;
+    return false;
+}
+
+User signIn(char *username, char *password) {
+    LList(User, users);
+    getAllUsers(users);
+
+    credentials searchFor;
+    searchFor.username = username;
+    searchFor.password = password;
+
+    Node_User *user = Search(searchFor, users, searchUser);
+    printf("%s %s logged in successfully!\n", user->value.name, user->value.lastname);
+    return user->value;
 }
 
 int main() {
-    User *users = (User *) malloc(5 * sizeof(User));
-    Admin *admins = (Admin *) malloc(5 * sizeof(Admin));
+    char *username = (char *) malloc(1000);
+    char *password = (char *) malloc(1000);
+    
+    printf("Enter your username: ");
+    scanf("%s", username);
+    printf("Enter your password: ");
+    scanf("%s", password);
 
-    int usersLen = getAllUsers(users);
-    int adminsLen = getAllAdmins(admins);
+    User user = signIn(username, password);
 
-    for (int i = 0; i < usersLen; i++) {
-        printf("%s\n", (users + i)->name);
-    }
-    for (int i = 0; i < adminsLen; i++) {
-        printf("%s\n", (admins + i)->name);
-    }
+    free(username);
+    free(password);
 }

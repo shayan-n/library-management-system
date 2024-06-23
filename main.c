@@ -1,4 +1,4 @@
-#include "Libraries/utilities.h"
+#include "Libraries/account.h"
 
 int main() {
     char *username = (char *) malloc(1000);
@@ -9,7 +9,7 @@ int main() {
     printf("Enter your password: ");
     scanf("%s", password);
 
-    
+    User user = signIn(username, password);
 
     free(username);
     free(password);

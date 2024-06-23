@@ -1,7 +1,7 @@
 #include <stdio.h>
-#include <stdlib.h>
 #include <stdbool.h>
 #include <json-c/json.h>
+#include "list.h"
 
 #define MAX 99999
 
