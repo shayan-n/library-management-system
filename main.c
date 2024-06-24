@@ -1,4 +1,5 @@
 #include "Libraries/account.h"
+#include "Libraries/cJSON.h"
 
 int main() {
     User newUser;
