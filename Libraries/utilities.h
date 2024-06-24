@@ -1,7 +1,8 @@
+#include "list.h"
+#include "cJSON.h"
 #include <stdio.h>
 #include <stdbool.h>
 #include <json-c/json.h>
-#include "list.h"
 
 #define MAX 99999
 
@@ -13,7 +14,7 @@ typedef struct {
     char *lastname;
     char *username;
     char *phoneNumber;
-    unsigned long int id;
+    int id;
 } User;
 
 typedef struct {
@@ -24,7 +25,13 @@ typedef struct {
     char *lastname;
     char *username;
     char *phoneNumber;
-    unsigned long int id;
+    int id;
 } Admin;
 
-struct json_object* JSON(char *path);
+cJSON* JSON(char *path);
+
+void overwrite(char *path, char *content);
+char* user_json_object_str(User user);
+
+bool isAPassword(char *password);
+bool isAPhoneNumber(char *phoneNumber);

@@ -3,7 +3,7 @@
 
 void getAllUsers(Linked_List_User *users) {
     struct json_object *usersObject;
-    struct json_object *json = JSON("../Data/accounts.json");
+    struct json_object *json = JSON("Data/accounts.json");
     json_object_object_get_ex(json, "users", &usersObject);
 
     json_object_object_foreach(usersObject, key, val) {
@@ -42,7 +42,7 @@ void getAllUsers(Linked_List_User *users) {
 
 void getAllAdmins(Linked_List_Admin *admins) {
     struct json_object *adminsObject;
-    struct json_object *json = JSON("../Data/accounts.json");
+    struct json_object *json = JSON("Data/accounts.json");
     json_object_object_get_ex(json, "admins", &adminsObject);
 
     json_object_object_foreach(adminsObject, key, val) {
@@ -92,7 +92,7 @@ bool searchUser(struct credentials value, Node_User* head) {
     return false;
 }
 
-User signIn(char *username, char *password) {
+User logIn(char *username, char *password) {
     LList(User, users);
     getAllUsers(users);
 
@@ -101,21 +101,37 @@ User signIn(char *username, char *password) {
     searchFor.password = password;
 
     Node_User *user = Search(searchFor, users, searchUser);
-    printf("%s %s logged in successfully!\n", user->value.name, user->value.lastname);
-    return user->value;
+    
+    if (user != NULL) return user->value;
+    else {
+        User nullUser; nullUser.id = -1;
+        return nullUser;
+    }
 }
 
-int main() {
-    char *username = (char *) malloc(1000);
-    char *password = (char *) malloc(1000);
+bool isUsernameTaken(char *username, Node_User *head) {
+    if (strcmp(username, head->value.username) == 0) return true;
+    return false;
+}
+
+User signUp(char *username, char *password, char *phoneNumber, char *name) {
+    LList(User, users);
+    getAllUsers(users);
+
+    User errorUser;
+    Node_User *user = Search(username, users, isUsernameTaken);
     
-    printf("Enter your username: ");
-    scanf("%s", username);
-    printf("Enter your password: ");
-    scanf("%s", password);
+    if (user != NULL) errorUser.id = -1;
+    else if (!isAPassword(password)) errorUser.id = -2;
+    else if (!isAPhoneNumber(phoneNumber)) errorUser.id = -3; 
 
-    User user = signIn(username, password);
+    if (errorUser.id < 0) return errorUser;
 
-    free(username);
-    free(password);
+    User newUser;
+    newUser.name = name;
+    newUser.username = username;
+    newUser.password = password;
+    newUser.phoneNumber = phoneNumber;
+
+    return newUser;
 }

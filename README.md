@@ -14,3 +14,14 @@ At(index, lls) -> index of the Node_typeName in Linked_List_typeName
 Append(newItem, lls) -> add the newItem to the end of the linked list
 Search(value, lls, keyFunc) -> search value in lls with the function you have to sepecifi which return a bool
 
+
+# To Run the file run the command below
+you got to have -ljson-c pre-installed
+    - gcc -o app main.c Libraries/utilities.c Libraries/list.c Libraries/account.c -ljson-c
+then
+    - ./app
+
+# for debug
+    - gcc -o app main.c Libraries/utilities.c Libraries/list.c Libraries/account.c -ljson-c -g
+then
+    - gdb ./app
