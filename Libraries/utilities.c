@@ -33,16 +33,6 @@ void overwrite(char *path, char *content) {
     fclose(file);
 }
 
-char* user_json_object_str(User user) {
-    char *str = MA(char);
-    
-    str = RA(char, str, MAX);
-    sprintf(str, " \"%s\": { \"id\": %d, \"sex\": \"%s\", \"name\": \"%s\", \"lastname\": \"%s\", \"address\": \"%s\", \"phoneNumber\": \"%s\", \"password\": \"%s\" } ", user.username, user.id, user.sex, user.name, user.lastname, user.address, user.phoneNumber, user.password);
-    str = RA(char, str, strlen(str) + 10);
-
-    return str;
-}
-
 bool isAPhoneNumber(char *phoneNumber) {
     regex_t reg;
 

@@ -17,11 +17,12 @@ Search(value, lls, keyFunc) -> search value in lls with the function you have to
 
 # To Run the file run the command below
 you got to have -ljson-c pre-installed
-    - gcc -o app main.c Libraries/utilities.c Libraries/list.c Libraries/account.c -ljson-c
+    - gcc -o app main.c Libraries/cJSON.c Libraries/utilities.c Libraries/list.c Libraries account.c
+
 then
     - ./app
 
 # for debug
-    - gcc -o app main.c Libraries/utilities.c Libraries/list.c Libraries/account.c -ljson-c -g
+    gcc -o app main.c Libraries/cJSON.c Libraries/utilities.c Libraries/list.c Libraries account.c -g
 then
     - gdb ./app

@@ -1,5 +1,11 @@
 #include "account.h"
+#include "cJSON.h"
 #include <string.h>
+
+typedef struct credentials {
+    char *username;
+    char *password;
+} credentials;
 
 void getAllUsers(Linked_List_User *users) {
     cJSON *json = JSON("Data/accounts.json");
@@ -33,48 +39,41 @@ void getAllUsers(Linked_List_User *users) {
 }
 
 void getAllAdmins(Linked_List_Admin *admins) {
-    // struct json_object *adminsObject;
-    // struct json_object *json = JSON("Data/accounts.json");
-    // json_object_object_get_ex(json, "admins", &adminsObject);
+    cJSON *json = JSON("Data/accounts.json");
+    cJSON *adminsObject = cJSON_GetObjectItemCaseSensitive(json, "admins");
 
-    // json_object_object_foreach(adminsObject, key, val) {
-    //     Admin newAdmin;
-        
-    //     struct json_object *id;
-    //     struct json_object *sex;
-    //     struct json_object *name;
-    //     struct json_object *address;
-    //     struct json_object *password;
-    //     struct json_object *lastname;
-    //     struct json_object *phoneNumber;
+    foreach_node(cJSON*, adminsObject->child) {
+        Admin newAdmin;
 
-    //     json_object_object_get_ex(val, "id", &id);
-    //     json_object_object_get_ex(val, "sex", &sex);
-    //     json_object_object_get_ex(val, "name", &name);
-    //     json_object_object_get_ex(val, "address", &address);
-    //     json_object_object_get_ex(val, "password", &password);
-    //     json_object_object_get_ex(val, "lastName", &lastname);
-    //     json_object_object_get_ex(val, "phoneNumber", &phoneNumber);
+        cJSON *id = cJSON_GetObjectItemCaseSensitive(current, "id");
+        cJSON *sex = cJSON_GetObjectItemCaseSensitive(current, "sex");
+        cJSON *name = cJSON_GetObjectItemCaseSensitive(current, "name");
+        cJSON *address = cJSON_GetObjectItemCaseSensitive(current, "address");
+        cJSON *password = cJSON_GetObjectItemCaseSensitive(current, "password");
+        cJSON *lastname = cJSON_GetObjectItemCaseSensitive(current, "lastName");
+        cJSON *phoneNumber = cJSON_GetObjectItemCaseSensitive(current, "phoneNumber");
 
-    //     newAdmin.username = key;
-    //     newAdmin.id = json_object_get_int(id);
-    //     newAdmin.sex = (char *) json_object_get_string(sex);
-    //     newAdmin.name = (char *) json_object_get_string(name);
-    //     newAdmin.address = (char *) json_object_get_string(address);
-    //     newAdmin.password = (char *) json_object_get_string(password);
-    //     newAdmin.lastname = (char *) json_object_get_string(lastname);
-    //     newAdmin.phoneNumber = (char *) json_object_get_string(phoneNumber);
+        newAdmin.id = id->valueint;
+        newAdmin.sex = sex->valuestring;
+        newAdmin.name = name->valuestring;
+        newAdmin.username = current->string;
+        newAdmin.address = address->valuestring;
+        newAdmin.password = password->valuestring;
+        newAdmin.lastname = lastname->valuestring;
+        newAdmin.phoneNumber = phoneNumber->valuestring;
 
-    //     Append(newAdmin, admins);
-    // }
+        Append(newAdmin, admins);
+    }
 
-    // free(json);
+    free(json);
 }
 
-typedef struct credentials {
-    char *username;
-    char *password;
-} credentials;
+int getLastId() {
+    cJSON *json = JSON("Data/accounts.json");
+    cJSON *id = cJSON_GetObjectItemCaseSensitive(json, "lastId");
+
+    return id->valueint;
+}
 
 bool searchUser(struct credentials value, Node_User* head) {
     if (
@@ -82,6 +81,36 @@ bool searchUser(struct credentials value, Node_User* head) {
         strcmp(value.password, head->value.password) == 0
     ) return true;
     return false;
+}
+
+bool isUsernameTakenUser(char *username, Node_User *head) {
+    if (strcmp(username, head->value.username) == 0) return true;
+    return false;
+}
+
+bool isUsernameTakenAdmin(char *username, Node_Admin *head) {
+    if (strcmp(username, head->value.username) == 0) return true;
+    return false;
+}
+
+void addUser(char *username, User user) {
+    cJSON *json = JSON("Data/accounts.json");
+    cJSON *lastId = cJSON_GetObjectItemCaseSensitive(json, "lastId");
+    cJSON *users = cJSON_GetObjectItemCaseSensitive(json, "users");
+    cJSON *newUser = cJSON_AddObjectToObject(users, username);
+
+    cJSON_AddNumberToObject(newUser, "id", user.id);
+    cJSON_AddStringToObject(newUser, "sex", user.sex);
+    cJSON_AddStringToObject(newUser, "name", user.name);
+    cJSON_AddStringToObject(newUser, "address", user.address);
+    cJSON_AddStringToObject(newUser, "lastName", user.lastname);
+    cJSON_AddStringToObject(newUser, "password", user.password);
+    cJSON_AddStringToObject(newUser, "phoneNumber", user.phoneNumber);
+
+    cJSON_SetNumberValue(lastId, user.id);
+
+    char *p = cJSON_Print(json);
+    overwrite("Data/accounts.json", p);
 }
 
 User logIn(char *username, char *password) {
@@ -101,29 +130,32 @@ User logIn(char *username, char *password) {
     }
 }
 
-bool isUsernameTaken(char *username, Node_User *head) {
-    if (strcmp(username, head->value.username) == 0) return true;
-    return false;
-}
-
 User signUp(char *username, char *password, char *phoneNumber, char *name) {
+    User user;
+    if (!isAPassword(password)) user.id = -1;
+    else if (!isAPhoneNumber(phoneNumber)) user.id = -2; 
+
     LList(User, users);
     getAllUsers(users);
+    LList(Admin, admins);
+    getAllAdmins(admins);
 
-    User errorUser;
-    Node_User *user = Search(username, users, isUsernameTaken);
-    
-    if (user != NULL) errorUser.id = -1;
-    else if (!isAPassword(password)) errorUser.id = -2;
-    else if (!isAPhoneNumber(phoneNumber)) errorUser.id = -3; 
+    Node_User *sameUsernameUser = Search(username, users, isUsernameTakenUser);
+    Node_Admin *sameUsernameAdmin = Search(username, admins, isUsernameTakenAdmin);
+    if (sameUsernameUser != NULL || sameUsernameAdmin != NULL) user.id = -3; 
 
-    if (errorUser.id < 0) return errorUser;
+    if (user.id < 0) return user;
 
-    User newUser;
-    newUser.name = name;
-    newUser.username = username;
-    newUser.password = password;
-    newUser.phoneNumber = phoneNumber;
+    user.sex = "";
+    user.address = "";
+    user.lastname = "";
+    user.name = name;
+    user.username = username;
+    user.password = password;
+    user.phoneNumber = phoneNumber;
+    user.id = getLastId() + 1;
 
-    return newUser;
+    addUser(username, user);
+    return user;
 }
+

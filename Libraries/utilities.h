@@ -1,6 +1,7 @@
 #include "list.h"
 #include "cJSON.h"
 #include <stdio.h>
+#include <string.h>
 #include <stdbool.h>
 #include <json-c/json.h>
 
@@ -31,7 +32,6 @@ typedef struct {
 cJSON* JSON(char *path);
 
 void overwrite(char *path, char *content);
-char* user_json_object_str(User user);
 
 bool isAPassword(char *password);
 bool isAPhoneNumber(char *phoneNumber);
