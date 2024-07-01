@@ -1,6 +1,8 @@
 #include "Libraries/account.h"
+#include "Libraries/errors.h"
 #include "Libraries/gui.h"
 #include <stdio.h>
+#include <string.h>
 #include <sys/ioctl.h>
 
 bool darkMode = false;
@@ -95,17 +97,20 @@ void header() {
 
 void body(line *lines, int n, int start, int deleteRow) {
     int eh = 8 + deleteRow; // extra height
-    for (int i = 0; i < terminal.ws_row - eh; i++) {
+    int extra = start + n + 7 > terminal.ws_row - eh ? start + n + 7 - terminal.ws_row + eh : 0;
+    int length = terminal.ws_row - eh + extra;
+
+    for (int i = 0; i < length; i++) {
         rgb(26, 26, 26, darkMode);
         rgb(245, 245, 245, !darkMode);
 
         // errorBox
         int errorLen = (int) strlen(error);
-        if (errorLen != 0 && (i == terminal.ws_row - eh - 5 || i == terminal.ws_row - eh - 6 || i == terminal.ws_row - eh - 7)) {
+        if (errorLen != 0 && (i == length - 5 || i == length - 6 || i == length - 7)) {
             string(text);
             int errorLine = 0;
 
-            if (i == terminal.ws_row - eh - 6) {
+            if (i == length - 6) {
                 sprintf(text, "%s", error);
                 errorLine = 4;
             } else {
@@ -127,13 +132,13 @@ void body(line *lines, int n, int start, int deleteRow) {
         }
 
         // footer
-        if (i == terminal.ws_row - eh - 3 || i == terminal.ws_row - eh - 1) {
+        if (i == length - 3 || i == length - 1) {
             rgb(28, 89, 115, true);
             print(" ", "", terminal.ws_col);
             setESC(BASH_NORMAL);
             continue;
         }
-        if (i == terminal.ws_row - eh - 2) {
+        if (i == length - 2) {
             setESC(BASH_BOLD);
             rgb(28, 89, 115, true);
             rgb(237, 250, 255, false);
@@ -182,7 +187,7 @@ int accountPage(User *user, int *activeAction) {
     printf(">> Select an option: ");
     scanf("%d", &option);
 
-    if (option < 1 || option > 4) error = "  Error: Please choose an option from the list!";
+    if (option < 1 || option > 4) error = WRONG_OPTION_ERR;
     else error = "";
 
     if (option > 0 && option < 4) {
@@ -249,7 +254,7 @@ void logInPage(User *user, int* activeAction) {
         *user = logIn(user->username, user->password);
 
         if (user->id == -1) {
-            error = "  Wrong credentials, please try again!";
+            error = WRONG_CREDENTIALS_ERR;
             *(activeAction) = 0;
         } 
         else {
@@ -330,13 +335,13 @@ void signUpPage(User *user, int* activeAction) {
         User newUser = signUp(username, password, phoneNumber, name, "user");
 
         if (newUser.id == -1) {
-            error = "  Sorry, that username is already taken, please choose another one!";
+            error = TAKEN_USERNAME_ERR;
             *(activeAction) = 4;
         } else if (newUser.id == -2) {
-            error = "  Invalid Password, It must be at least 8 character long!";
+            error = INVALID_PASSWORD_ERR;
             *(activeAction) = 5;
         } else if (newUser.id == -3) {
-            error = "  Invalid phone number, try again!";
+            error = INVALID_PHONENUMBER_ERR;
             *(activeAction) = 6;
         } else {
             page = 0;
@@ -398,7 +403,7 @@ void forgetPasswordPage(User *user, int* activeAction) {
         *user = findUserWithMobile(user->username, user->phoneNumber);
 
         if (user->id == -1) {
-            error = "  No user found. Please check your input and try again!";
+            error = NOUSER_FOUND_WRONG_INPUT_ERR;
             *(activeAction) = 8;
         } 
         else {
@@ -447,7 +452,7 @@ void setNewPasswordPage(User *user, int* activeAction) {
         scanf("%s", input);
 
         if (strcmp(input, user->password) != 0) {
-            error = "  Password and confirm password do not match, try again!";
+            error = PASSWORD_DONOT_MATCH_ERR;
             *(activeAction) = 11;
             return;
         }
@@ -464,7 +469,7 @@ void setNewPasswordPage(User *user, int* activeAction) {
 
     if (*activeAction == 13) {
         if (!isAPassword(user->password)) {
-            error = "  Invalid Password, It must be at least 8 character long!";
+            error = INVALID_PASSWORD_ERR;
             *(activeAction) = 11;
         } 
         else {
@@ -477,17 +482,12 @@ void setNewPasswordPage(User *user, int* activeAction) {
     }
 }
 
-// page 5 activeAction 14
-void homePage(User *user, int* activeAction) {
-    if (page != 5) return;
-
-    line *lines = MA(line);
-    lines = RA(line, lines, 1);
-
-    // Menu
-    char *menuItems = " A. Donate Book  B. Borrow Book  C. Books list  D. Setting ";
-    char *items[4] = { " A. Donate Book ", " B. Borrow Book ", " C. Books list ", " D. Setting " };
-    char *space[4] = { "                ", "                ", "               ", "            " };
+// 2 line menu
+void menu() {
+    int pages[4] = { 7, 8, 9, 6 };
+    char *menuItems = " |A. Donate Book|  |B. Borrow Book|  |C. Books list|  |D. Setting| ";
+    char *items[4] = { " |A. Donate Book| ", " |B. Borrow Book| ", " |C. Books list| ", " |D. Setting| " };
+    char *space[4] = { "                  ", "                  ", "                 ", "              " };
 
     int spaceBeforeAndAfter = (int) (terminal.ws_col / 2) - (int) (strlen(menuItems) / 2);
     int cutSpace = (terminal.ws_col % 2 == 0 && strlen(menuItems) % 2 != 0) ? 1 : 0;
@@ -496,21 +496,272 @@ void homePage(User *user, int* activeAction) {
     rgb(28, 89, 115, true);
     print("", "left",  spaceBeforeAndAfter - cutSpace);
     for (int i = 0; i < 4; i++) {
-        print(page != 5 + i ? items[i] : space[i], "center", strlen(space[i]));
+        print(page != pages[i] ? items[i] : space[i], "center", strlen(space[i]));
     }
     print("", "left",  spaceBeforeAndAfter);
     setESC(BASH_NORMAL);
 
     // line under Items
+    if (!darkMode) rgb(245, 245, 245, true);
+    else rgb(26, 26, 26, true);
+
+    print("", "left",  spaceBeforeAndAfter - cutSpace);
+    for (int i = 0; i < 4; i++) {
+        if (!darkMode) rgb(245, 245, 245, true);
+        else rgb(26, 26, 26, true);
+
+        if (page == pages[i]) {
+            setESC(BASH_BOLD);
+            rgb(28, 89, 115, true);
+        }
+
+        print(page == pages[i] ? items[i] : space[i], "center", strlen(space[i]));
+        setESC(BASH_NORMAL);
+    }
+    if (!darkMode) rgb(245, 245, 245, true);
+    else rgb(26, 26, 26, true);
+    
+    print("", "left",  spaceBeforeAndAfter);
+    setESC(BASH_NORMAL);
+}
+
+// page 5 - no activeAction 
+void homePage(User *user, int* activeAction) {
+    if (page != 5) return;
+
+    line *lines = MA(line);
+    lines = RA(line, lines, 38);
+
+    menu();
 
     // other lines
-    setLine(lines + 0, "Home Page", "center", "");
+    char *coffeeDesign = "[38;2;184;184;184m";
+    setLine(lines + 0, "              Home Page               ", "center", "bold");
+    setLine(lines + 1, "Please choose an option from the menu!", "center", "bold,doubleunderline");
+    setLine(lines + 2, "", "center", "");
+    setLine(lines + 3, "", "center", "");
+    setLine(lines + 2 + 2, "                 1111   111    1111               ", "center", coffeeDesign);
+    setLine(lines + 3 + 2, "                  111    111    1111              ", "center", coffeeDesign);
+    setLine(lines + 4 + 2, "                   111    111    111              ", "center", coffeeDesign);
+    setLine(lines + 5 + 2, "                   111    111    111              ", "center", coffeeDesign);
+    setLine(lines + 6 + 2, "                  111    1111   1111              ", "center", coffeeDesign);
+    setLine(lines + 7 + 2, "                1111    111    1111               ", "center", coffeeDesign);
+    setLine(lines + 8 + 2, "              1111    1111   1111                 ", "center", coffeeDesign);
+    setLine(lines + 9 + 2, "             1111   1111   1111                   ", "center", coffeeDesign);
+    setLine(lines + 10 + 2, "            1111   1111   1111                    ", "center", coffeeDesign);
+    setLine(lines + 11 + 2, "            1111   1111   1111                    ", "center", coffeeDesign);
+    setLine(lines + 12 + 2, "             111    1111   1111                   ", "center", coffeeDesign);
+    setLine(lines + 13 + 2, "              1111   1111   1111                  ", "center", coffeeDesign);
+    setLine(lines + 14 + 2, "               11111   1111   1111                ", "center", coffeeDesign);
+    setLine(lines + 15 + 2, "                 1111    111    111               ", "center", coffeeDesign);
+    setLine(lines + 16 + 2, "                   111    111    111              ", "center", coffeeDesign);
+    setLine(lines + 17 + 2, "                   111    111    111              ", "center", coffeeDesign);
+    setLine(lines + 18 + 2, "                  1111   1111    111              ", "center", coffeeDesign);
+    setLine(lines + 19 + 2, "                 111    1111   1111               ", "center", coffeeDesign);
+    setLine(lines + 20 + 2, "                11     111     11                 ", "center", coffeeDesign);
+    setLine(lines + 21 + 2, "          11111111111111111111111111111111        ", "center", coffeeDesign);
+    setLine(lines + 22 + 2, "111111111111  1111111111111111111111111111        ", "center", coffeeDesign);
+    setLine(lines + 23 + 2, "111111111111  1111111111111111111111111111        ", "center", coffeeDesign);
+    setLine(lines + 24 + 2, "111       11  1111111111111111111111111111        ", "center", coffeeDesign);
+    setLine(lines + 25 + 2, "111       11  1111111111111111111111111111        ", "center", coffeeDesign);
+    setLine(lines + 26 + 2, "111       11  1111111111111111111111111111        ", "center", coffeeDesign);
+    setLine(lines + 27 + 2, "111       11  1111111111111111111111111111        ", "center", coffeeDesign);
+    setLine(lines + 28 + 2, " 11111111111  1111111111111111111111111111        ", "center", coffeeDesign);
+    setLine(lines + 29 + 2, " 11111111111  1111111111111111111111111111        ", "center", coffeeDesign);
+    setLine(lines + 30 + 2, "          11   111111111111111111111111111        ", "center", coffeeDesign);
+    setLine(lines + 31 + 2, "          111   1111111111111111111111111         ", "center", coffeeDesign);
+    setLine(lines + 32 + 2, "            1111111111111111111111111111          ", "center", coffeeDesign);
+    setLine(lines + 33 + 2, "11                                             111", "center", coffeeDesign);
+    setLine(lines + 34 + 2, "11111111111111111111111111111111111111111111111111", "center", coffeeDesign);
+    setLine(lines + 35 + 2, "  1111111111111111111111111111111111111111111111  ", "center", coffeeDesign);
 
-    body(lines, 1, terminal.ws_row / 4, 2);
+    body(lines, 38, 3, 2);
 
-    int a;
+    string(input);
+    printf(">> Select an option: ");
+    scanf("%s", input);
+
+    bool isA = strcmp(input, "A") == 0;
+    bool isB = strcmp(input, "B") == 0;
+    bool isC = strcmp(input, "C") == 0;
+    bool isD = strcmp(input, "D") == 0;
+
+    if (isA || isB || isC || isD) {
+        page = 0;
+        delayPage = isA ? 7 : isB ? 8 : isC ? 9 : 6;
+        *activeAction = 14;        
+    } else {
+        error = WRONG_OPTION_ERR;
+    }
+}
+// activeAction = 14 => means selecting options from the page options 
+
+void changeDarkMode(int* activeAction) {
+    string(input);
+    printf(">> Dark mode (on / off)? ");
+    scanf("%s", input);
+
+    bool isOn = strcmp(input, "on") == 0;
+    bool isOff = strcmp(input, "off") == 0;
+
+    if (!isOn && !isOff) {
+        error = WRONG_INPUT_ERR;
+    } else {
+        error = "";
+        darkMode = isOn;
+        *activeAction = 14;
+    }
+}
+
+void changeUserSex(User *user, int* activeAction) {
+    string(input);
+    printf(">> Your sex (male, female)? ");
+    scanf("%s", input);
+
+    bool isMale = strcmp(input, "male") == 0;
+    bool isFemale = strcmp(input, "female") == 0;
+
+    if (!isMale && !isFemale) {
+        error = WRONG_INPUT_ERR;
+    } else {
+        error = "";
+        user->sex = isFemale ? "female" : "male";
+        changeUserData(user->username, "sex", user->sex);
+        *activeAction = 14;
+    }
+}
+
+void changeUserName(User *user, int* activeAction) {
+    string(input);
+    printf(">> Set your name: ");
+    fgets(input, STR_MALLOC_LENGTH, stdin);
+    fgets(input, STR_MALLOC_LENGTH, stdin);
+
+    if (input[strlen(input) - 1] == '\n') input[strlen(input) - 1] = '\0';
+
+    error = "";
+    user->name = input;
+    changeUserData(user->username, "name", user->name);
+    *activeAction = 14;
+}
+
+void changeUserLastname(User *user, int* activeAction) {
+    string(input);
+    printf(">> Set your last name: ");
+    fgets(input, STR_MALLOC_LENGTH, stdin);
+    fgets(input, STR_MALLOC_LENGTH, stdin);
+
+    if (input[strlen(input) - 1] == '\n') input[strlen(input) - 1] = '\0';
+
+    error = "";
+    user->lastname = input;
+    changeUserData(user->username, "lastName", user->lastname);
+    *activeAction = 14;
+}
+
+// page 6 activeAction 14 
+void settingPage(User *user, int* activeAction) {
+    if (page != 6) return;
+
+    line *lines = MA(line);
+    lines = RA(line, lines, 8);
+    menu();
+
+    int maxLength = 0;
+    for (int i = 0;i < 6; i++) {
+        string(item);
+        item = "off";
+
+        if (i == 1)      { item = user->sex; }
+        else if (i == 2) { item = user->name; }
+        else if (i == 3) { item = user->lastname; }
+        else if (i == 4) { item = user->phoneNumber; }
+        else if (i == 5) { item = user->address; }
+        
+        int length = strlen(item);
+
+        if (i == 0 || i == 3) length += 14;
+        if (i == 1) length += 8;
+        if (i == 2) length += 9;
+        if (i == 4) length += 17;
+        if (i == 5) length += 12;
+
+        if (length > maxLength) maxLength = length;
+    }
+
+    string(line0);
+    string(line1);
+    string(line2);
+    string(line3);
+    string(line4);
+    string(line5);
+    // max length is always more than 17 because default item above is off which has len 3 and the "1. Dark mode: " has 14
+    sprintf(line0, "1. Dark mode: %s%*s", darkMode ? "On" : "Off", maxLength - 17, "");
+    sprintf(line1, "2. Sex: %s%*s", user->sex, maxLength - 8 - (int)strlen(user->sex), "");
+    sprintf(line2, "3. Name: %s%*s", user->name, maxLength - 9 - (int)strlen(user->name), "");
+    sprintf(line3, "4. Last name: %s%*s", user->lastname, maxLength - 14 - (int)strlen(user->lastname), "");
+    sprintf(line4, "5. Phone number: %s%*s", user->phoneNumber, maxLength - 17 - (int)strlen(user->phoneNumber), "");
+    sprintf(line5, "6. Address: %s%*s", user->address, maxLength - 12 - (int)strlen(user->address), "");
+
+    setLine(lines + 0, line0, "center", "");
+    setLine(lines + 1, "", "center", "");
+    setLine(lines + 2, line1, "center", "");
+    setLine(lines + 3, line2, "center", "");
+    setLine(lines + 4, line3, "center", "");
+    setLine(lines + 5, line4, "center", "");
+    setLine(lines + 6, "", "center", "");
+    setLine(lines + 7, line5, "center", "");
+
+    body(lines, 8, terminal.ws_row / 4, 2);
+
+    int action = *activeAction;
+    if (action == 15) {
+        changeDarkMode(activeAction);
+        return;
+    } else if (action == 16) {
+        changeUserSex(user, activeAction);
+        return;
+    } else if (action == 17) {
+        changeUserName(user, activeAction);
+        return;
+    } else if (action == 18) {
+        changeUserLastname(user, activeAction);
+        return;
+    }
+
+    int option;
+    printf(">> Select an option: ");
+    scanf("%d", &option);
+
+    if (option < 1 || option > 6) {
+        error = WRONG_OPTION_ERR;
+        return;
+    } 
+
+    error = "";
+    if (option == 1) *activeAction = 15;
+    else if (option == 2) *activeAction = 16;
+    else if (option == 3) *activeAction = 17;
+    else if (option == 4) *activeAction = 18;
+    else if (option == 5) *activeAction = 19;
+    else if (option == 6) *activeAction = 20;
+}
+
+// page 6 activeAction ?
+void donateBookPage(User *user, int* activeAction) {
+    if (page != 7) return;
+
+    line *lines = MA(line);
+    lines = RA(line, lines, 1);
+    menu();
+
+    setLine(lines + 0, "Donate Book", "center", "");
+    body(lines, 1, 0, 2);
+
+    int a ;
     scanf("%d", &a);
 }
+
 
 int main() {
     User *user = MA(User); 
@@ -548,5 +799,7 @@ int main() {
         setNewPasswordPage(user, &activeAction);
 
         homePage(user, &activeAction);
+        settingPage(user, &activeAction);
+        donateBookPage(user, &activeAction);
     }
 }

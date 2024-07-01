@@ -12,14 +12,34 @@
 		},
 		"wave":	{
 			"id":	2,
+			"sex":	"male",
+			"name":	"Shayan",
+			"role":	"user",
+			"address":	"",
+			"lastName":	"Bajelan",
+			"password":	"12345678",
+			"phoneNumber":	"09377780569"
+		},
+		"erfan":	{
+			"id":	3,
 			"sex":	"",
-			"name":	"Wave",
+			"name":	"erfan",
 			"role":	"user",
 			"address":	"",
 			"lastName":	"",
 			"password":	"12345678",
-			"phoneNumber":	"09377780569"
+			"phoneNumber":	"09035376777"
+		},
+		"new":	{
+			"id":	4,
+			"sex":	"",
+			"name":	"aksflajsf",
+			"role":	"user",
+			"address":	"",
+			"lastName":	"",
+			"password":	"17264712647126417847",
+			"phoneNumber":	"09105371477"
 		}
 	},
-	"lastId":	2
+	"lastId":	4
 }
