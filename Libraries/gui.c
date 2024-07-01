@@ -18,7 +18,7 @@ void rgbHelper(char *color) {
 
 char* hyperLink(char *link, char *title) {
     char *str = CA(char);
-    str = RA(char, str, 1000);
+    str = RA(char, str, STR_MALLOC_LENGTH);
     sprintf(str, "\e]8;;%s\e\\%s\e]8;;\e\\", link, title);
     
     return str;

@@ -6,6 +6,7 @@
 #include <json-c/json.h>
 
 #define MAX 99999
+#define STR_MALLOC_LENGTH 1000
 
 typedef struct {
     char *sex;
