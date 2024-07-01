@@ -7,6 +7,9 @@
 
 #define MAX 99999
 #define STR_MALLOC_LENGTH 1000
+#define string(text) \
+    char *text = CA(char); \
+    text = RA(char, text, STR_MALLOC_LENGTH);
 
 typedef struct {
     char *sex;

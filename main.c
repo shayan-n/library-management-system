@@ -1,5 +1,6 @@
 #include "Libraries/account.h"
 #include "Libraries/gui.h"
+#include <stdio.h>
 #include <sys/ioctl.h>
 
 bool darkMode = false;
@@ -100,7 +101,7 @@ void body(line *lines, int n, int start) {
         // errorBox
         int errorLen = (int) strlen(error);
         if (errorLen != 0 && (i == terminal.ws_row - eh - 5 || i == terminal.ws_row - eh - 6 || i == terminal.ws_row - eh - 7)) {
-            char *text = CA(char); text = RA(char, text, STR_MALLOC_LENGTH);
+            string(text);
             int errorLine = 0;
 
             if (i == terminal.ws_row - eh - 6) {
@@ -136,8 +137,7 @@ void body(line *lines, int n, int start) {
             rgb(28, 89, 115, true);
             rgb(237, 250, 255, false);
             char *link = hyperLink("https://github.com/shayan-n/library-management-system", "(Project Link)");
-            char *text = CA(char);
-            text = RA(char, text, STR_MALLOC_LENGTH); 
+            string(text);
 
             sprintf(text, "© 2024 Shayan Bajelan | %s", link);
             print(text, "center", terminal.ws_col + strlen(link) - strlen("(Project Link)") + 1);
@@ -149,7 +149,7 @@ void body(line *lines, int n, int start) {
         if (i >= start) {
             line l = *(lines + i - start);
             if (i - start < n) {
-                char *spaceDesign = CA(char); spaceDesign = RA(char, spaceDesign, STR_MALLOC_LENGTH); 
+                string(spaceDesign);
 
                 sprintf(spaceDesign, "[%d8;2;26;26;26m,[%d8;2;245;245;245m", darkMode ? 4 : 3, darkMode ? 3 : 4);
                 designPrint(l.str, l.place, l.width, spaceDesign, l.design);
@@ -161,7 +161,7 @@ void body(line *lines, int n, int start) {
     }
 }
 
-int accountPage() {
+int accountPage(int *activeAction) {
     if (page != 0) return -1; // -1 mean page skiped
 
     line *lines = MA(line);
@@ -183,32 +183,142 @@ int accountPage() {
     if (option < 1 || option > 4) error = "  Error: Please choose an option from the list!";
     else error = "";
 
-    if (option > 0 && option < 4) page = option;
+    if (option > 0 && option < 4) {
+        page = option;
+
+        if (page == 1) *activeAction = 0;
+        if (page == 2) *activeAction = 4;
+    }
 
     // -2 mean continue this page while showing the error
     return strlen(error) != 0 ? -2 : option;
 }
 
-void logInPage() {
-    if (page != 1) return;
+void logInPage(User *user, int* activeAction) {
+    if (page != 1) return; //actions are 0 and 1
 
     line *lines = MA(line);
     lines = RA(line, lines, 5);
 
-    setLine(lines + 0, "Enter your username           ", "center", "strikethrough");
-    setLine(lines + 1, "-> Enter your password           ", "center", "bold");
+    int action = *activeAction;
+    string(line1);
+    sprintf(line1, "%s 1. Enter your username      ", action == 0 ? "->" : "  ");
+    string(line2);
+    sprintf(line2, "%s 2. Enter your password      ", action == 1 ? "->" : "  ");
+
+    char *doneDesign = "strikethrough";
+    char *activeDesign = "bold,[38;2;255;139;23m";
+
+    setLine(lines + 0, line1, "center", action == 0 ? activeDesign : doneDesign);
+    setLine(lines + 1, line2, "center", action == 1 ? activeDesign : action > 1 ? doneDesign : "");
     setLine(lines + 2, "", "center", "");
     setLine(lines + 3, "", "center", "");
-    setLine(lines + 4, "For going back write 'back..'!", "center", "");
+    setLine(lines + 4, "  For going back write (back..)", "center", "italic,dim");
 
     body(lines, 5, terminal.ws_row / 4);
-    
-    int a;
-    scanf("%d", &a);
+
+    string(input);
+    if (action == 0) {
+        printf(">> Username: ");
+        scanf("%s", input);
+        user->username = input;
+    }
+    else if (action == 1) {
+        printf(">> Password: ");
+        scanf("%s", input);
+        user->password = input;
+    }
+
+    if (strcmp(input, "back..") == 0) {
+        page = 0;
+        *activeAction = 0;
+    }
+
+    *(activeAction) += 1;
+
+    if (*activeAction == 2) {
+        *user = logIn(user->username, user->password);
+
+        if (user->id == -1) {
+            error = "  Wrong credentials, please try again!";
+            *(activeAction) = 0;
+        } 
+        else {
+            page = 0;
+            error = "";
+            *(activeAction) = 3;
+        } 
+    }
+}
+
+void signUpPage(User *user, int* activeAction) {
+    if (page != 2) return; // action from 3 
+
+    line *lines = MA(line);
+    lines = RA(line, lines, 5);
+
+    int action = *activeAction;
+    string(line1);
+    sprintf(line1, "%s 2. Enter your name           ", action == 3 ? "->" : "  ");
+    string(line2);
+    sprintf(line2, "%s 1. Enter your username       ", action == 4 ? "->" : "  ");
+    string(line3);
+    sprintf(line3, "%s 2. Enter your password       ", action == 5 ? "->" : "  ");
+    string(line4);
+    sprintf(line4, "%s 2. Enter your phone number   ", action == 6 ? "->" : "  ");
+
+    char *doneDesign = "strikethrough";
+    char *activeDesign = "bold,[38;2;255;139;23m";
+
+    setLine(lines + 0, line1, "center", action == 0 ? activeDesign : doneDesign);
+    setLine(lines + 1, line2, "center", action == 1 ? activeDesign : action > 1 ? doneDesign : "");
+    setLine(lines + 2, "", "center", "");
+    setLine(lines + 3, "", "center", "");
+    setLine(lines + 4, "  For going back write (back..)", "center", "italic,dim");
+
+    body(lines, 5, terminal.ws_row / 4);
+
+    string(input);
+    if (action == 0) {
+        printf(">> Username: ");
+        scanf("%s", input);
+        user->username = input;
+    }
+    else if (action == 1) {
+        printf(">> Password: ");
+        scanf("%s", input);
+        user->password = input;
+    }
+
+    if (strcmp(input, "back..") == 0) {
+        page = 0;
+        *activeAction = 0;
+    }
+
+    *(activeAction) += 1;
+
+    if (*activeAction == 2) {
+        *user = logIn(user->username, user->password);
+
+        if (user->id == -1) {
+            error = "  Wrong credentials, please try again!";
+            *(activeAction) = 0;
+        } 
+        else {
+            page = 0;
+            error = "";
+            *(activeAction) = 3;
+        } 
+    }
 }
 
 int main() {
+    User *user = MA(User); 
+    int activeAction = 0;
+
     while (true) {
+        // Starter
+        printf("\n");
         // Clearing every thing in terminal
         system("clear");
 
@@ -219,13 +329,13 @@ int main() {
         header();
 
         // If we are in account page
-        int option = accountPage();
+        int option = accountPage(&activeAction);
         if (option == 4) {
             system("clear");
             break;
         } else if (option != -1) continue;
             
         // If we are in login page
-        logInPage();
+        logInPage(user, &activeAction);
     }
 }

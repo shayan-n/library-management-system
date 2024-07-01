@@ -2,7 +2,15 @@
 	"admins":	{
 	},
 	"users":	{
-
+        "shayan_bajelan": {
+            "id": "123456789",
+            "sex": "123456789",
+            "name": "123456789",
+            "lastName": "123456789",
+            "address": "123456789",
+            "password": "123456789",
+            "phoneNumber": "123456789"
+        }
 	},
 	"lastId":	0
 }
