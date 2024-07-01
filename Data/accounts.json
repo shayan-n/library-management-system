@@ -1,16 +1,25 @@
 {
-	"admins":	{
-	},
 	"users":	{
-        "shayan_bajelan": {
-            "id": "123456789",
-            "sex": "123456789",
-            "name": "123456789",
-            "lastName": "123456789",
-            "address": "123456789",
-            "password": "123456789",
-            "phoneNumber": "123456789"
-        }
+		"shayan":	{
+			"id":	1,
+			"sex":	"",
+			"name":	"Shayan",
+			"role":	"user",
+			"address":	"",
+			"lastName":	"",
+			"password":	"12345678",
+			"phoneNumber":	"09105371477"
+		},
+		"wave":	{
+			"id":	2,
+			"sex":	"",
+			"name":	"Wave",
+			"role":	"user",
+			"address":	"",
+			"lastName":	"",
+			"password":	"12345678",
+			"phoneNumber":	"09377780569"
+		}
 	},
-	"lastId":	0
+	"lastId":	2
 }

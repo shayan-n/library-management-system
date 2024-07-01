@@ -8,6 +8,7 @@ cJSON* JSON(char *path) {
 
     if (file == NULL) {
         printf("No such path found!");
+        int a; scanf("%d", &a);
         return NULL;
     }
 
@@ -15,7 +16,10 @@ cJSON* JSON(char *path) {
     fclose(file);
 
     cJSON *json = cJSON_Parse(buffer);
-    if (json == NULL) printf("There's a problem with cJson!");
+    if (json == NULL) {
+        printf("There's a problem with cJson!");
+        int a; scanf("%d", &a);
+    }
     
     return json;
 }
@@ -26,6 +30,7 @@ void overwrite(char *path, char *content) {
 
     if (file == NULL) {
         printf("No such path found!");
+        int a; scanf("%d", &a);
         return;
     }
 

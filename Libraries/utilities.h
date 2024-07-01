@@ -14,6 +14,7 @@
 typedef struct {
     char *sex;
     char *name;
+    char *role;
     char *address;
     char *password;
     char *lastname;
@@ -21,17 +22,6 @@ typedef struct {
     char *phoneNumber;
     int id;
 } User;
-
-typedef struct {
-    char *sex;
-    char *name;
-    char *address;
-    char *password;
-    char *lastname;
-    char *username;
-    char *phoneNumber;
-    int id;
-} Admin;
 
 cJSON* JSON(char *path);
 
