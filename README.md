@@ -4,15 +4,19 @@ This is a university project, in which we should create a library management sys
 # Run the app
 
 First compile the app with gcc as below:
-    - gcc -o app main.c Libraries/cJSON.c Libraries/utilities.c Libraries/list.c Libraries/models.c Libraries/gui.c Libraries/errors.h
+
+    ~$ gcc -o app main.c Libraries/cJSON.c Libraries/utilities.c Libraries/list.c Libraries/models.c Libraries/gui.c Libraries/errors.h 
 
 Then run the app
-    - ./app
+    
+    ~$ ./app
 
 # Debug the app
 
 First run:
-    - gcc -o app main.c Libraries/cJSON.c Libraries/utilities.c Libraries/list.c Libraries/models.c Libraries/gui.c Libraries/errors.h -g
+    
+    ~$ gcc -o app main.c Libraries/cJSON.c Libraries/utilities.c Libraries/list.c Libraries/models.c Libraries/gui.c Libraries/errors.h -g
 
 Then run gdb:
-    - gdb ./app
+    
+    ~$ gdb ./app
