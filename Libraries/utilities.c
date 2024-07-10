@@ -21,6 +21,7 @@ cJSON* JSON(char *path) {
         int a; scanf("%d", &a);
     }
     
+    free(buffer);
     return json;
 }
 
@@ -59,3 +60,12 @@ bool isAPassword(char *password) {
     if (value == 0) return true;
     return false;
 }
+
+void get(char *string, int n) {
+    fgets(string, n, stdin);
+
+    int len = strlen(string);
+    if (string[len - 1] == '\n') {
+        string[len - 1] = '\0';
+    }
+} 

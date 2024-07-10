@@ -45,24 +45,24 @@
     lls->length += 1;                                                         \
 })
 
-#define At(index, lls)                \
-({                                    \
-    T(lls->items) head = lls->items;  \
-    T(lls->items) answer = head;      \
-    if (lls->length == 0) {           \
-        answer = NULL;                \
-    } else {                          \
-        int i = 0;                    \
-        while (head != NULL) {        \
-            if (i == index) {         \
-                answer = head;        \
-                break;                \
-            }                         \
-            i += 1;                   \
-            head = head->next;        \
-        }                             \
-    }                                 \
-    answer;                           \
+#define At(index, lls)                            \
+({                                                \
+    T(lls->items) head = lls->items;              \
+    T(lls->items) answer = head;                  \
+    if (lls->length == 0) {                       \
+        answer = NULL;                            \
+    } else {                                      \
+        int hardIndexName = 0;                    \
+        while (head != NULL) {                    \
+            if (hardIndexName == index) {         \
+                answer = head;                    \
+                break;                            \
+            }                                     \
+            hardIndexName += 1;                   \
+            head = head->next;                    \
+        }                                         \
+    }                                             \
+    answer;                                       \
 })
 
 #define Search(searchValue, lls, keyFunc)                               \

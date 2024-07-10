@@ -71,6 +71,8 @@ void applyDesign(char *_design) {
         if (letter != ',') {
             *(word + j) = letter;
             word = RA(char, word, j + 2);
+            *(word + j + 1) = '\0';
+            
             j += 1;
         } else {
             design(word, j);

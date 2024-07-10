@@ -1,6 +1,15 @@
-#include "account.h"
-#include "cJSON.h"
+#include "models.h"
 #include <string.h>
+
+char *booksPath = "Data/books.json";
+char *accountsPath = "Data/accounts.json";
+
+int getLastId(char *path) {
+    cJSON *json = JSON(path);
+    cJSON *id = cJSON_GetObjectItemCaseSensitive(json, "lastId");
+
+    return id->valueint;
+}
 
 void emptyUser(User *user) {
     user->id = 0;
@@ -17,7 +26,7 @@ void emptyUser(User *user) {
 User getUser(char *username) {
     User user;
 
-    cJSON *json = JSON("Data/accounts.json");
+    cJSON *json = JSON(accountsPath);
     cJSON *users = cJSON_GetObjectItemCaseSensitive(json, "users");
     cJSON *_user = cJSON_GetObjectItemCaseSensitive(users, username);
 
@@ -49,7 +58,7 @@ User getUser(char *username) {
 }
 
 void getAllUsers(Linked_List_User *users) {
-    cJSON *json = JSON("Data/accounts.json");
+    cJSON *json = JSON(accountsPath);
     cJSON *usersObject = cJSON_GetObjectItemCaseSensitive(json, "users");
 
     int i = 0;
@@ -81,15 +90,8 @@ void getAllUsers(Linked_List_User *users) {
     free(json);
 }
 
-int getLastId() {
-    cJSON *json = JSON("Data/accounts.json");
-    cJSON *id = cJSON_GetObjectItemCaseSensitive(json, "lastId");
-
-    return id->valueint;
-}
-
 void addUser(char *username, User user) {
-    cJSON *json = JSON("Data/accounts.json");
+    cJSON *json = JSON(accountsPath);
     cJSON *lastId = cJSON_GetObjectItemCaseSensitive(json, "lastId");
     cJSON *users = cJSON_GetObjectItemCaseSensitive(json, "users");
     cJSON *newUser = cJSON_AddObjectToObject(users, username);
@@ -106,12 +108,11 @@ void addUser(char *username, User user) {
     cJSON_SetNumberValue(lastId, user.id);
 
     char *p = cJSON_Print(json);
-    overwrite("Data/accounts.json", p);
+    overwrite(accountsPath, p);
 }
 
 void changeUserData(char *username, char *key, char *value) {
-    // I'm not checking for user existence, since its rarely happens and its computationally expensive
-    cJSON *json = JSON("Data/accounts.json");
+    cJSON *json = JSON(accountsPath);
     cJSON *users = cJSON_GetObjectItemCaseSensitive(json, "users");
     cJSON *user = cJSON_GetObjectItemCaseSensitive(users, username);
     cJSON *item = cJSON_GetObjectItemCaseSensitive(user, key);
@@ -119,7 +120,7 @@ void changeUserData(char *username, char *key, char *value) {
     cJSON_SetValuestring(item, value);
 
     char *p = cJSON_Print(json);
-    overwrite("Data/accounts.json", p);
+    overwrite(accountsPath, p);
 }
 
 User logIn(char *username, char *password) {
@@ -149,7 +150,7 @@ User signUp(char *username, char *password, char *phoneNumber, char *name, char 
     user.username = username;
     user.password = password;
     user.phoneNumber = phoneNumber;
-    user.id = getLastId() + 1;
+    user.id = getLastId(accountsPath) + 1;
 
     addUser(username, user);
     return user;
@@ -163,4 +164,98 @@ User findUserWithMobile(char *username, char *phoneNumber) {
     }
 
     return user;
+}
+
+Book getBook(char *id) {
+    Book book;
+
+    cJSON *json = JSON(booksPath);
+    cJSON *books = cJSON_GetObjectItemCaseSensitive(json, "books");
+    cJSON *_book = cJSON_GetObjectItemCaseSensitive(books, id);
+
+    if (_book == NULL) {
+        book.id = NULL;
+        return book;
+    }
+
+    cJSON *rate = cJSON_GetObjectItemCaseSensitive(_book, "rate");
+    cJSON *title = cJSON_GetObjectItemCaseSensitive(_book, "title");
+    cJSON *genre = cJSON_GetObjectItemCaseSensitive(_book, "genre");
+    cJSON *author = cJSON_GetObjectItemCaseSensitive(_book, "author");
+    cJSON *summary = cJSON_GetObjectItemCaseSensitive(_book, "summary");
+    cJSON *isBorrow = cJSON_GetObjectItemCaseSensitive(_book, "isBorrow");
+    cJSON *keywords = cJSON_GetObjectItemCaseSensitive(_book, "keywords");
+    cJSON *comments = cJSON_GetObjectItemCaseSensitive(_book, "comments");
+    cJSON *releaseDate = cJSON_GetObjectItemCaseSensitive(_book, "releaseDate");
+    cJSON *borrowedTill = cJSON_GetObjectItemCaseSensitive(_book, "borrowedTill");
+
+    book.id = id;
+    book.rate = rate->valuedouble;
+    book.title = title->valuestring;
+    book.genre = genre->valuestring;
+    book.author = author->valuestring;
+    book.summary = summary->valuestring;
+    book.isBorrow = isBorrow->valueint;
+    book.keywords = keywords->valuestring;
+    book.releaseDate = releaseDate->valuestring;
+    book.borrowedTill = borrowedTill->valuestring;
+
+    cJSON *current;
+    cJSON_ArrayForEach(current, comments){
+        Append(current->valuestring, book.comments);
+    }
+
+    return book;
+}
+
+void addBook(Book book) {
+    string(newId);
+    cJSON *json = JSON(booksPath);
+    cJSON *lastId = cJSON_GetObjectItemCaseSensitive(json, "lastId");
+    cJSON *books = cJSON_GetObjectItemCaseSensitive(json, "books");
+    sprintf(newId, "%d", atoi(lastId->valuestring) + 1);
+    cJSON *newBook = cJSON_AddObjectToObject(books, newId);
+
+    cJSON_AddBoolToObject(newBook, "isBorrow", book.isBorrow);
+    cJSON_AddNumberToObject(newBook, "rate", book.rate);
+    cJSON_AddStringToObject(newBook, "title", book.title);
+    cJSON_AddStringToObject(newBook, "summary", book.summary);
+    cJSON_AddStringToObject(newBook, "author", book.author);
+    cJSON_AddStringToObject(newBook, "genre", book.genre);
+    cJSON_AddStringToObject(newBook, "releaseDate", book.releaseDate);
+    cJSON_AddStringToObject(newBook, "borrowedTill", book.borrowedTill);
+    cJSON_AddStringToObject(newBook, "keywords", book.keywords);
+    cJSON *comments = cJSON_AddArrayToObject(newBook, "comments");
+
+    foreach_node(Node_string*, book.comments->items){
+        cJSON *newItem = cJSON_CreateString(current->value);
+        cJSON_AddItemToArray(comments, newItem);
+    }
+
+    cJSON_SetValuestring(lastId, newId);
+    free(newId);
+
+    char *p = cJSON_Print(json);
+    overwrite(booksPath, p);
+}
+
+#define SetBookData(ExtraLine)                                      \
+    cJSON *json = JSON(booksPath);                                  \
+    cJSON *books = cJSON_GetObjectItemCaseSensitive(json, "books"); \
+    cJSON *book = cJSON_GetObjectItemCaseSensitive(books, id);      \
+    cJSON *item = cJSON_GetObjectItemCaseSensitive(book, key);      \
+    ExtraLine                                                       \
+    char *p = cJSON_Print(json);                                    \
+    overwrite(booksPath, p);
+
+void changeBookDataString(char *id, char *key, char *value) {
+    SetBookData(cJSON_SetValuestring(item, value););
+}
+
+void changeBookDataDouble(char *id, char *key, double value) {
+    SetBookData(cJSON_SetNumberValue(item, value););
+}
+
+void changeBookDataBool(char *id, char *key, bool value) {
+    SetBookData(cJSON_SetBoolValue(item, value););
 }
