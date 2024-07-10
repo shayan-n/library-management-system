@@ -1,9 +1,0 @@
-sources: 
- - https://www.geeksforgeeks.org/search-an-element-in-a-linked-list iterative-and-recursive/?ref=lbp	
- - https://www.geeksforgeeks.org/c-program-for-searching-an-element-in-a-linked-list/
- - https://www.geeksforgeeks.org/dynamic-memory-allocation-in-c-using-malloc-calloc-free-and-realloc/
- - https://www.iar.com/knowledge/learn/programming/advanced-preprocessor-tips-and-tricks/
- - https://stackoverflow.com/questions/12989298/is-it-possible-to-use-a-if-statement-inside-define
- - https://stackoverflow.com/questions/400951/does-c-have-a-foreach-loop-construct
- - https://stackoverflow.com/questions/11649125/how-to-add-a-custom-library-to-gcc-while-compliling
- 
