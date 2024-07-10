@@ -2,6 +2,8 @@
 #include "utilities.h"
 
 DLinkedList(User, User)
+DLinkedList(Book, Book)
+
 int getLastId(char *path);
 
 void emptyUser(User *user);
@@ -15,6 +17,8 @@ User findUserWithMobile(char *username, char *phoneNumber);
 
 Book getBook(char *id);
 void addBook(Book book);
+void emptyBook(Book *book);
+void getAllBooks(Linked_List_Book *books);
 void changeBookDataBool(char *id, char *key, bool value);
 void changeBookDataString(char *id, char *key, char *value);
 void changeBookDataDouble(char *id, char *key, double value);

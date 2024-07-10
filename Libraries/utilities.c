@@ -61,6 +61,46 @@ bool isAPassword(char *password) {
     return false;
 }
 
+bool isADate(char *date) {
+    int length = strlen(date), j = 0, count = 0;
+    char *word = MA(char);
+
+    for (int i = 0;i < length; i++) {
+        char letter = *(date + i);
+
+        if (letter != '-') {
+            *(word + j) = letter;
+            word = RA(char, word, j + 2);
+            *(word + j + 1) = '\0';
+            
+            j += 1;
+        } else {
+            if (count == 1) {
+                int len = strlen(word);
+                int month = atoi(word);
+
+                if (len > 2 || len < 1) return false;
+                if (month < 0 || month > 12) return false;
+            }
+
+            *(word + 0) = '\0';
+            j = 0;
+            count += 1;
+        }
+    }
+
+    if (count == 2) {
+        int len = strlen(word);
+        int day = atoi(word);
+
+        if (len > 2 || len < 1) return false;
+        if (day < 0 || day > 31) return false;
+
+        return true;
+    }
+    return false;
+}
+
 void get(char *string, int n) {
     fgets(string, n, stdin);
 

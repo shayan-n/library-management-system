@@ -12,11 +12,32 @@ int page = 0;
 int delayPage = -1;
 
 char *error = "";
-char *listItemDoneDesign = "strikethrough";
+char *listItemDoneDesign = "bold";
 char *listItemActiveDesign = "bold,[38;2;255;139;23m";
 char *listItemActiveOptionDesign = "blink,bold,[38;2;255;139;23m";
-char *goingBackText = "  For going back write (back..)";
+char *goingBackText = "  Write back.. to move back";
 char *goingBackDesgin = "italic,dim,[38;2;100;100;100m";
+char *changingPage = "  Change page with (PAGE X)";
+char *backActionTypo = "back..";
+
+#define GoBack(_page, _starter)             \
+    if (strcmp(input, backActionTypo) == 0) \
+    {                                       \
+        if (*activeAction == _starter) {    \
+            page = _page;                   \
+            error = "";                     \
+            *activeAction = 0;              \
+            return;                         \
+        }                                   \
+        *activeAction -= 1;                 \
+        return;                             \
+    }
+
+#define DelayGo(_page, _action)  \
+    {page = 0;                   \
+    delayPage = _page;           \
+    error = "";                  \
+    *activeAction = _action;}    \
 
 typedef struct line {
     int width;
@@ -24,6 +45,17 @@ typedef struct line {
     char *place;
     char *design;
 } line;
+
+int findMaxLength(char *items[], int n){
+    int max = 0;
+    for (int i = 0;i < n; i++) {
+        if (i == 0 || strlen(items[i]) > max) {
+            max = strlen(items[i]);
+        }
+    }
+
+    return max;
+}
 
 void setLine(line *l, char *str, char *place, char *design) {
     l->str = str;
@@ -97,7 +129,13 @@ void header() {
     print("Welcome to our library management system!", "center", terminal.ws_col);
     print("", "right", terminal.ws_col);
     print("", "right", terminal.ws_col);
-    print("", "right", terminal.ws_col);
+    if (page >= 5){
+        setESC(BASH_ITALIC);
+        rgb(200, 200, 200, false);
+        print(changingPage, "center", terminal.ws_col);
+    } else {
+        print("", "right", terminal.ws_col);
+    }
     setESC(BASH_NORMAL);
 }
 
@@ -217,16 +255,15 @@ void logInPage(User *user, int* activeAction) {
     line *lines = MA(line);
     lines = RA(line, lines, 7);
 
-    int action = *activeAction;
     string(line1);
-    sprintf(line1, "%s 1. Enter your username      ", action == 0 ? "->" : "  ");
     string(line2);
-    sprintf(line2, "%s 2. Enter your password      ", action == 1 ? "->" : "  ");
+    sprintf(line1, "%s 1. Username: %s", *activeAction == 0 ? "->" : "  ", user->username);
+    sprintf(line2, "%s 2. Password: %*s", *activeAction == 1 ? "->" : "  ", (int)strlen(user->username), "");
 
     setLine(lines + 0, "             Login             ", "center", "bold");
     setLine(lines + 1, "", "center", "");
-    setLine(lines + 2, line1, "center", action == 0 ? listItemActiveDesign : listItemDoneDesign);
-    setLine(lines + 3, line2, "center", action == 1 ? listItemActiveDesign : action > 1 ? listItemDoneDesign : "");
+    setLine(lines + 2, line1, "center", *activeAction == 0 ? listItemActiveDesign : listItemDoneDesign);
+    setLine(lines + 3, line2, "center", *activeAction == 1 ? listItemActiveDesign : *activeAction > 1 ? listItemDoneDesign : "");
     setLine(lines + 4, "", "center", "");
     setLine(lines + 5, "", "center", "");
     setLine(lines + 6, goingBackText, "center", goingBackDesgin);
@@ -234,39 +271,28 @@ void logInPage(User *user, int* activeAction) {
     body(lines, 7, terminal.ws_row / 4, 0);
 
     string(input);
-    if (action == 0) {
-        printf(">> Username: ");
+    if (*activeAction == 0) {
+        printf(">> Enter your username: ");
         get(input, STR_MALLOC_LENGTH);
         user->username = input;
     }
-    else if (action == 1) {
-        printf(">> Password: ");
+    else if (*activeAction == 1) {
+        printf(">> Enter your password: ");
         get(input, STR_MALLOC_LENGTH);
         user->password = input;
     }
 
-    if (strcmp(input, "back..") == 0) {
-        page = 0;
-        error = "";
-        *activeAction = 0;
-        return;
-    }
-    
-    *(activeAction) += 1;
+    GoBack(0, 0)
+    *activeAction += 1;
 
     if (*activeAction == 2) {
         *user = logIn(user->username, user->password);
 
         if (user->id == -1) {
             error = WRONG_CREDENTIALS_ERR;
-            *(activeAction) = 0;
+            *activeAction = 0;
         } 
-        else {
-            page = 0;
-            delayPage = 5;
-            error = "";
-            *(activeAction) = 14;
-        } 
+        else DelayGo(5, 14)
     }
 }
 
@@ -277,23 +303,25 @@ void signUpPage(User *user, int* activeAction) {
     line *lines = MA(line);
     lines = RA(line, lines, 9);
 
-    int action = *activeAction;
-
     string(line1);
-    sprintf(line1, "%s 2. Enter your name           ", action == 3 ? "->" : "  ");
     string(line2);
-    sprintf(line2, "%s 1. Enter your username       ", action == 4 ? "->" : "  ");
     string(line3);
-    sprintf(line3, "%s 2. Enter your password       ", action == 5 ? "->" : "  ");
     string(line4);
-    sprintf(line4, "%s 2. Enter your phone number   ", action == 6 ? "->" : "  ");
+
+    char *tempItems[4] = { user->name, user->username, user->password, user->phoneNumber };
+    int maxSpace = findMaxLength(tempItems, 4);
+
+    sprintf(line1, "%s 1. Name:           %s%*s", *activeAction == 3 ? "->" : "  ", user->name, maxSpace - (int)strlen(user->name), "");
+    sprintf(line2, "%s 2. Username:       %s%*s", *activeAction == 4 ? "->" : "  ", user->username, maxSpace - (int)strlen(user->username), "");
+    sprintf(line3, "%s 3. Password:       %s%*s", *activeAction == 5 ? "->" : "  ", user->password, maxSpace - (int)strlen(user->password), "");
+    sprintf(line4, "%s 4. Phone number:   %s%*s", *activeAction == 6 ? "->" : "  ", user->phoneNumber, maxSpace - (int)strlen(user->phoneNumber), "");
 
     setLine(lines + 0, "             Signup            ", "center", "bold");
     setLine(lines + 1, "", "center", "");
-    setLine(lines + 2, line1, "center", action == 3 ? listItemActiveDesign : listItemDoneDesign);
-    setLine(lines + 3, line2, "center", action == 4 ? listItemActiveDesign : action > 4 ? listItemDoneDesign : "");
-    setLine(lines + 4, line3, "center", action == 5 ? listItemActiveDesign : action > 5 ? listItemDoneDesign : "");
-    setLine(lines + 5, line4, "center", action == 6 ? listItemActiveDesign : action > 6 ? listItemDoneDesign : "");
+    setLine(lines + 2, line1, "center", *activeAction == 3 ? listItemActiveDesign : listItemDoneDesign);
+    setLine(lines + 4, line3, "center", *activeAction == 5 ? listItemActiveDesign : *activeAction > 5 ? listItemDoneDesign : "");
+    setLine(lines + 3, line2, "center", *activeAction == 4 ? listItemActiveDesign : *activeAction > 4 ? listItemDoneDesign : "");
+    setLine(lines + 5, line4, "center", *activeAction == 6 ? listItemActiveDesign : *activeAction > 6 ? listItemDoneDesign : "");
     setLine(lines + 6, "", "center", "");
     setLine(lines + 7, "", "center", "");
     setLine(lines + 8, goingBackText, "center", goingBackDesgin);
@@ -301,32 +329,23 @@ void signUpPage(User *user, int* activeAction) {
     body(lines, 9, terminal.ws_row / 4, 0);
 
     string(input);
-    if (action == 3) {
-        printf(">> Name: ");
-        get(input, STR_MALLOC_LENGTH);
-        user->name = input;
-    } else if (action == 4) {
-        printf(">> Username: ");
-        get(input, STR_MALLOC_LENGTH);
-        user->username = input;
-    } else if (action == 5) {
-        printf(">> Password: ");
-        get(input, STR_MALLOC_LENGTH);
-        user->password = input;
-    } else if (action == 6) {
-        printf(">> Phone number: ");
-        get(input, STR_MALLOC_LENGTH);
-        user->phoneNumber = input;
-    }
+    char *qs[4] = { 
+        ">> Enter your name: ",
+        ">> Enter your username: ",
+        ">> Enter your password: ",
+        ">> Enter your phone number: "
+    };
 
-    if (strcmp(input, "back..") == 0) {
-        page = 0;
-        error = "";
-        *activeAction = 0;
-        return;
-    }
+    printf("%s", qs[*activeAction - 3]);
+    get(input, STR_MALLOC_LENGTH);
+    GoBack(0, 3)
 
-    *(activeAction) += 1;
+    if (*activeAction == 3) user->name = input;
+    else if (*activeAction == 4) user->username = input;
+    else if (*activeAction == 5) user->password = input;
+    else if (*activeAction == 6) user->phoneNumber = input;
+
+    *activeAction += 1;
 
     if (*activeAction == 7) {
         char *name = user->name;
@@ -337,19 +356,14 @@ void signUpPage(User *user, int* activeAction) {
 
         if (newUser.id == -1) {
             error = TAKEN_USERNAME_ERR;
-            *(activeAction) = 4;
+            *activeAction = 4;
         } else if (newUser.id == -2) {
             error = INVALID_PASSWORD_ERR;
-            *(activeAction) = 5;
+            *activeAction = 5;
         } else if (newUser.id == -3) {
             error = INVALID_PHONENUMBER_ERR;
-            *(activeAction) = 6;
-        } else {
-            page = 0;
-            delayPage = 5;
-            error = "";
-            *(activeAction) = 14;
-        } 
+            *activeAction = 6;
+        } else DelayGo(5, 14)
     }
 }
 
@@ -360,16 +374,15 @@ void forgetPasswordPage(User *user, int* activeAction) {
     line *lines = MA(line);
     lines = RA(line, lines, 7);
 
-    int action = *activeAction;
     string(line1);
-    sprintf(line1, "%s 1. Enter your username      ", action == 8 ? "->" : "  ");
     string(line2);
-    sprintf(line2, "%s 2. Enter your phone number  ", action == 9 ? "->" : "  ");
+    sprintf(line1, "%s 1. Username:       %s", *activeAction == 8 ? "->" : "  ", user->username);
+    sprintf(line2, "%s 2. Phone number:   %*s", *activeAction == 9 ? "->" : "  ", (int)strlen(user->username), "");
 
     setLine(lines + 0, "     Forget your password?     ", "center", "bold");
     setLine(lines + 1, "", "center", "");
-    setLine(lines + 2, line1, "center", action == 8 ? listItemActiveDesign : listItemDoneDesign);
-    setLine(lines + 3, line2, "center", action == 9 ? listItemActiveDesign : action > 9 ? listItemDoneDesign : "");
+    setLine(lines + 2, line1, "center", *activeAction == 8 ? listItemActiveDesign : listItemDoneDesign);
+    setLine(lines + 3, line2, "center", *activeAction == 9 ? listItemActiveDesign : *activeAction > 9 ? listItemDoneDesign : "");
     setLine(lines + 4, "", "center", "");
     setLine(lines + 5, "", "center", "");
     setLine(lines + 6, goingBackText, "center", goingBackDesgin);
@@ -377,39 +390,28 @@ void forgetPasswordPage(User *user, int* activeAction) {
     body(lines, 7, terminal.ws_row / 4, 0);
 
     string(input);
-    if (action == 8) {
-        printf(">> Username: ");
-        get(input, STR_MALLOC_LENGTH);
-        user->username = input;
-    }
-    else if (action == 9) {
-        printf(">> Phone number: ");
-        get(input, STR_MALLOC_LENGTH);
-        user->phoneNumber = input;
-    }
+    char *qs[2] = { 
+        ">> Enter your username: ",
+        ">> Enter your phone number: ",
+    };
 
-    if (strcmp(input, "back..") == 0) {
-        page = 0;
-        error = "";
-        *activeAction = 0;
-        return;
-    }
+    printf("%s", qs[*activeAction - 8]);
+    get(input, STR_MALLOC_LENGTH);
+    GoBack(0, 8)
 
-    *(activeAction) += 1;
+    if (*activeAction == 8) user->username = input;
+    else if (*activeAction == 9) user->phoneNumber = input;
+
+    *activeAction += 1;
 
     if (*activeAction == 10) {
         *user = findUserWithMobile(user->username, user->phoneNumber);
 
         if (user->id == -1) {
             error = NOUSER_FOUND_WRONG_INPUT_ERR;
-            *(activeAction) = 8;
+            *activeAction = 8;
         } 
-        else {
-            page = 0;
-            delayPage = 4;
-            error = "";
-            *(activeAction) = 11;
-        } 
+        else DelayGo(4, 11)
     }
 }
 
@@ -420,16 +422,15 @@ void setNewPasswordPage(User *user, int* activeAction) {
     line *lines = MA(line);
     lines = RA(line, lines, 7);
 
-    int action = *activeAction;
     string(line1);
-    sprintf(line1, "%s 1. Enter your new password  ", action == 11 ? "->" : "  ");
     string(line2);
-    sprintf(line2, "%s 2. Confirm the new password ", action == 12 ? "->" : "  ");
+    sprintf(line1, "%s 1. New password:            ", *activeAction == 11 ? "->" : "  ");
+    sprintf(line2, "%s 2. Confirm password:        ", *activeAction == 12 ? "->" : "  ");
 
     setLine(lines + 0, "       Set new password!       ", "center", "bold");
     setLine(lines + 1, "", "center", "");
-    setLine(lines + 2, line1, "center", action == 11 ? listItemActiveDesign : listItemDoneDesign);
-    setLine(lines + 3, line2, "center", action == 12 ? listItemActiveDesign : action > 12 ? listItemDoneDesign : "");
+    setLine(lines + 2, line1, "center", *activeAction == 11 ? listItemActiveDesign : listItemDoneDesign);
+    setLine(lines + 3, line2, "center", *activeAction == 12 ? listItemActiveDesign : *activeAction > 12 ? listItemDoneDesign : "");
     setLine(lines + 4, "", "center", "");
     setLine(lines + 5, "", "center", "");
     setLine(lines + 6, goingBackText, "center", goingBackDesgin);
@@ -437,25 +438,19 @@ void setNewPasswordPage(User *user, int* activeAction) {
     body(lines, 7, terminal.ws_row / 4, 0);
 
     string(input);
-    if (action == 11) {
-        printf(">> New password: ");
-        get(input, STR_MALLOC_LENGTH);
-        user->password = input;
-    }
-    else if (action == 12) {
-        printf(">> Confirm password: ");
-        get(input, STR_MALLOC_LENGTH);
-    }
+    char *qs[2] = { 
+        ">> Enter your new password: ",
+        ">> Confirm the new password: ",
+    };
 
-    if (strcmp(input, "back..") == 0) {
-        page = 0;
-        error = "";
-        *activeAction = 0;
-        return;
-    }
-    else if (action == 12 && strcmp(input, user->password) != 0) {
+    printf("%s", qs[*activeAction - 11]);
+    get(input, STR_MALLOC_LENGTH);
+    GoBack(0, 11)
+    
+    if (*activeAction == 11) user->password = input;
+    else if (*activeAction == 12 && strcmp(input, user->password) != 0) {
         error = PASSWORD_DONOT_MATCH_ERR;
-        *(activeAction) = 11;
+        *activeAction = 11;
         return;
     }
 
@@ -464,7 +459,7 @@ void setNewPasswordPage(User *user, int* activeAction) {
     if (*activeAction == 13) {
         if (!isAPassword(user->password)) {
             error = INVALID_PASSWORD_ERR;
-            *(activeAction) = 11;
+            *activeAction = 11;
         } 
         else {
             changeUserData(user->username, "password", user->password);
@@ -521,10 +516,10 @@ void menu() {
 
 // navigating functionality
 bool menuNavigation(char *input, int* activeAction) {
-    bool isA = strcmp(input, "A") == 0;
-    bool isB = strcmp(input, "B") == 0;
-    bool isC = strcmp(input, "C") == 0;
-    bool isD = strcmp(input, "D") == 0;
+    bool isA = strcmp(input, "PAGE A") == 0;
+    bool isB = strcmp(input, "PAGE B") == 0;
+    bool isC = strcmp(input, "PAGE C") == 0;
+    bool isD = strcmp(input, "PAGE D") == 0;
 
     if (isA || isB || isC || isD) {
         page = 0;
@@ -807,7 +802,7 @@ void settingPage(User *user, int* activeAction) {
     else if (option == 7) *activeAction = 21;
 }
 
-// page 7 activeAction 22
+// page 7 activeAction 22 - 28
 void donateBookPage(User *user, Book *book, int* activeAction) {
     if (page != 7) return;
 
@@ -828,7 +823,13 @@ void donateBookPage(User *user, Book *book, int* activeAction) {
 
     for (int i = 0;i < 7; i++) {
         string(line);
-        sprintf(line, items[i], *activeAction == activeActionStarter + i ? "->" : "  ", "");
+        string(filler);
+
+        filler = i == 0 ? book->title : i == 1 ? book->author :
+                 i == 2 ? book->genre : i == 3 ? book->keywords : 
+                 i == 4 ? book->summary : book->releaseDate;
+                 
+        sprintf(line, items[i], *activeAction == activeActionStarter + i ? "->" : "  ", filler);
         Append(line, stringLines);
     }
 
@@ -843,19 +844,29 @@ void donateBookPage(User *user, Book *book, int* activeAction) {
     body(lines, 11, terminal.ws_row / 4, 2);
 
     string(input);
-    bool navStatus = menuNavigation(input, activeAction);
-    if (navStatus) return;
     char *qs[7] = { 
         ">> Book title: ",
         ">> Book author: ",
         ">> Book genre: ",
-        ">> Book keywords: ",
+        ">> Book keywords (seprate each word with space): ",
         ">> Book summary: ",
-        ">> Book release date: "
+        ">> Book release date (e.g. 2024-7-10): "
     };
 
     printf("%s", qs[*activeAction - activeActionStarter]);
     get(input, STR_MALLOC_LENGTH);
+    bool navStatus = menuNavigation(input, activeAction);
+    if (navStatus) return;
+    if (strcmp(input, "back..") == 0) {
+        if (*activeAction == activeActionStarter) {
+            page = 5;
+            error = "";
+            *activeAction = 14;
+            return;
+        }
+        *activeAction -= 1;
+        return;
+    }
 
     if (*activeAction == activeActionStarter + 0) book->title = input;
     if (*activeAction == activeActionStarter + 1) book->author = input;
@@ -866,6 +877,12 @@ void donateBookPage(User *user, Book *book, int* activeAction) {
 
     *activeAction += 1;
     if (*activeAction == 28) {
+        if (!isADate(book->releaseDate)) {
+            error = INVALID_DATEFORMAT_ERR;
+            *activeAction -= 1;
+            return;
+        }
+
         addBook(*book);
         page = 0;
         delayPage = 5;
@@ -874,12 +891,125 @@ void donateBookPage(User *user, Book *book, int* activeAction) {
     }
 }
 
+#define SummarizeString(dest, src, len)           \
+    strncpy(dest, src, len);                  \
+    if (strlen(src) > len) strcat(dest, ".."); \
+    else { \
+        string(temp); \
+        sprintf(temp, "%*s", len - (int)strlen(src) + 3, ""); \
+        strcat(dest, temp); \
+    }
+
+// page 9 activeAction 29
+bool booksList(User *user, int *activeAction) {
+    if (page != 9) return false;
+
+    menu();
+    LList(Book, books);
+    getAllBooks(books);
+
+    line *lines = CA(line);
+    lines = RA(line, lines, books->length + 2);
+
+    string(htitle);
+    SummarizeString(htitle, "Title", 25);
+
+    string(hauthor);
+    SummarizeString(hauthor, "Author", 25);
+
+    string(hgenre);
+    SummarizeString(hgenre, "Genre", 25);
+
+    string(hrate);
+    SummarizeString(hrate, "Rate", 25);
+
+    string(hrow);
+    strcat(hrow, "|  ");
+    strcat(hrow, htitle);
+    strcat(hrow, "  |");
+    strcat(hrow, "  ");
+    strcat(hrow, hauthor);
+    strcat(hrow, "  |");
+    strcat(hrow, "  ");
+    strcat(hrow, hgenre);
+    strcat(hrow, "  |");
+    strcat(hrow, "  ");
+    strcat(hrow, hrate);
+    strcat(hrow, "  |");
+
+    string(devider);
+    sprintf(devider, "%*s", 121, "");
+    setLine(lines + 0, hrow, "left", "bold");
+    setLine(lines + 1, devider, "left", "");
+
+    int i = 2;
+    foreach_node(Node_Book*, books->items) {
+        Book book = current->value;
+        
+        string(title);
+        SummarizeString(title, book.title, 25);
+
+        string(author);
+        SummarizeString(author, book.author, 25);
+
+        string(genre);
+        SummarizeString(genre, book.genre, 25);
+
+        string(rate);
+        string(rateHelper);
+        sprintf(rateHelper, "%f", book.rate);
+        SummarizeString(rate, rateHelper, 25);
+
+        string(row);
+        strcat(row, "|  ");
+        strcat(row, title);
+        strcat(row, "  |");
+        strcat(row, "  ");
+        strcat(row, author);
+        strcat(row, "  |");
+        strcat(row, "  ");
+        strcat(row, genre);
+        strcat(row, "  |");
+        strcat(row, "  ");
+        strcat(row, rate);
+        strcat(row, "  |");
+
+        setLine(lines + i, row, "left", "");
+
+        i++;
+    }
+
+    body(lines, books->length + 2, 3, 2);
+
+    string(input);
+    printf("TO BE DONE, PRESS ENTER TO END THE APP!");
+    get(input, STR_MALLOC_LENGTH);
+    return true;
+}
+
+// page 8
+bool tempPage(User *user, int *activeAction) {
+    if (page != 8) return false;
+    menu();
+    line *lines = MA(line);
+    lines = RA(line, lines, 1);
+
+    setLine(lines + 0, "TO BE DONE, PRESS ENTER TO END THE APP!", "center", "bold,italic");
+    body(lines, 1, terminal.ws_row / 3, 2);
+
+    string(input);
+    printf(">> PRESS ENTER: ");
+    get(input, 1000);
+    return true;
+}
+
 int main() {
     User *user = MA(User); 
     Book *book = MA(Book);
 
     int activeAction = 0;
-    user->id = 0;
+    emptyUser(user);
+    emptyBook(book);
 
     while (true) {
         if (delayPage != -1) {
@@ -913,5 +1043,7 @@ int main() {
         homePage(user, &activeAction);
         settingPage(user, &activeAction);
         donateBookPage(user, book, &activeAction);
+        if (booksList(user, &activeAction)) break;
+        if (tempPage(user, &activeAction)) break;
     }
 }

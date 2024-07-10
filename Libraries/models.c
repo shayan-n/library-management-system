@@ -1,4 +1,5 @@
 #include "models.h"
+#include "cJSON.h"
 #include <string.h>
 
 char *booksPath = "Data/books.json";
@@ -23,8 +24,23 @@ void emptyUser(User *user) {
     user->phoneNumber = "";
 }
 
+void emptyBook(Book *book) {
+    book->id = "";
+    book->rate = 0;
+    book->title = "";
+    book->genre = "";
+    book->author = "";
+    book->summary = "";
+    book->releaseDate = "";
+    book->isBorrow = false;
+    book->borrowedTill = "";
+    book->keywords = "";
+    book->comments = MA(Linked_List_string);
+}
+
 User getUser(char *username) {
     User user;
+    user.username = username;
 
     cJSON *json = JSON(accountsPath);
     cJSON *users = cJSON_GetObjectItemCaseSensitive(json, "users");
@@ -45,7 +61,6 @@ User getUser(char *username) {
     cJSON *phoneNumber = cJSON_GetObjectItemCaseSensitive(_user, "phoneNumber");
 
     user.id = id->valueint;
-    user.username = username;
     user.sex = sex->valuestring;
     user.name = name->valuestring;
     user.role = role->valuestring;
@@ -208,6 +223,18 @@ Book getBook(char *id) {
     return book;
 }
 
+void getAllBooks(Linked_List_Book *books) {
+    cJSON *json = JSON(booksPath);
+    cJSON *booksObject = cJSON_GetObjectItemCaseSensitive(json, "books");
+
+    foreach_node(cJSON*, booksObject->child) {
+        Book newBook = getBook(current->string);
+        Append(newBook, books);
+    }
+
+    free(json);
+}
+
 void addBook(Book book) {
     string(newId);
     cJSON *json = JSON(booksPath);
@@ -227,9 +254,11 @@ void addBook(Book book) {
     cJSON_AddStringToObject(newBook, "keywords", book.keywords);
     cJSON *comments = cJSON_AddArrayToObject(newBook, "comments");
 
-    foreach_node(Node_string*, book.comments->items){
-        cJSON *newItem = cJSON_CreateString(current->value);
-        cJSON_AddItemToArray(comments, newItem);
+    if (book.comments->length != 0){
+        foreach_node(Node_string*, book.comments->items){
+            cJSON *newItem = cJSON_CreateString(current->value);
+            cJSON_AddItemToArray(comments, newItem);
+        }
     }
 
     cJSON_SetValuestring(lastId, newId);

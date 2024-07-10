@@ -45,5 +45,6 @@ void overwrite(char *path, char *content);
 
 bool isAPassword(char *password);
 bool isAPhoneNumber(char *phoneNumber);
+bool isADate(char *date);
 
 void get(char *string, int n);

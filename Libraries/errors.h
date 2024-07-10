@@ -6,3 +6,4 @@
 #define NOUSER_FOUND_WRONG_INPUT_ERR "  No user found. Please check your input and try again!"
 #define PASSWORD_DONOT_MATCH_ERR "  Password and confirm password do not match, try again!"
 #define WRONG_INPUT_ERR "  Wrong input, try again!";
+#define INVALID_DATEFORMAT_ERR "  Invalid date format, try again!"
