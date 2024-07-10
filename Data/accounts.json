@@ -1,45 +1,5 @@
 {
 	"users":	{
-		"test":	{
-			"id":	1,
-			"sex":	"male",
-			"name":	"Shayan",
-			"role":	"user",
-			"address":	"Janat Abad Jonobi",
-			"lastName":	"Bajelan",
-			"password":	"77889977",
-			"phoneNumber":	"09105371477"
-		},
-		"test1":	{
-			"id":	2,
-			"sex":	"",
-			"name":	"test",
-			"role":	"user",
-			"address":	"",
-			"lastName":	"",
-			"password":	"testtest",
-			"phoneNumber":	"09105371477"
-		},
-		"wave":	{
-			"id":	3,
-			"sex":	"",
-			"name":	"Shayan",
-			"role":	"user",
-			"address":	"",
-			"lastName":	"",
-			"password":	"12345678",
-			"phoneNumber":	"09105371477"
-		},
-		"this":	{
-			"id":	4,
-			"sex":	"",
-			"name":	"Shayan ",
-			"role":	"user",
-			"address":	"",
-			"lastName":	"",
-			"password":	"thisthat",
-			"phoneNumber":	"09105371477"
-		}
 	},
-	"lastId":	4
+	"lastId":	0
 }
